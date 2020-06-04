@@ -17,3 +17,9 @@ texture = ExtResource( 1 )
 
 [node name="Camera2D" type="Camera2D" parent="."]
 current = true
+
+[node name="NextPointCast" type="RayCast2D" parent="."]
+enabled = true
+
+[node name="JumpCast" type="RayCast2D" parent="."]
+enabled = true
