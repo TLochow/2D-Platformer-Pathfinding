@@ -23,3 +23,15 @@ enabled = true
 
 [node name="JumpCast" type="RayCast2D" parent="."]
 enabled = true
+
+[node name="JumpCasts" type="Node2D" parent="."]
+
+[node name="Left" type="RayCast2D" parent="JumpCasts"]
+position = Vector2( -7, -8 )
+enabled = true
+cast_to = Vector2( 0, -10 )
+
+[node name="Right" type="RayCast2D" parent="JumpCasts"]
+position = Vector2( 7, -8 )
+enabled = true
+cast_to = Vector2( 0, -10 )
