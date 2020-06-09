@@ -17,6 +17,7 @@ var JumpStrength = 0.0
 var MoveSpeed = 0.0
 var GravityForce = 0.0
 var JumpLength
+var MaxJumpHeight = 0.0
 
 func SetMovementValues(jumpStrength, moveSpeed, gravityForce):
 	JumpStrength = jumpStrength
@@ -30,9 +31,10 @@ func CalculateJumpLength(jumpStrength, moveSpeed, gravityForce):
 	moveSpeed /= 60.0
 	var yMovement = -jumpStrength
 	while pos.y <= 0.0:
-		pos.y += yMovement
+		pos.y += yMovement / 60.0
 		yMovement += gravityForce
 		pos.x += moveSpeed
+		MaxJumpHeight = max(MaxJumpHeight, abs(pos.y))
 	return pos.x
 
 func SetGoal(goal):
@@ -56,7 +58,7 @@ func _process(delta):
 		if pathSize > 1:
 			SetPointCastCoords(to_local(path[1]))
 		
-		if abs(next.x - pos.x) <= 16.0 and next.y > pos.y - 16.0 and next.y < pos.y + 26.0 and PathClear():
+		if abs(next.x - pos.x) <= 20.0 and next.y > pos.y - 10.0 and next.y < pos.y + 26.0 and PathClear():
 			path.remove(0)
 		else:
 			var isOnFloor = is_on_floor()
@@ -78,21 +80,22 @@ func _process(delta):
 				JumpCast.cast_to = Vector2(12.0, 12.0)
 			
 			var jumpUp = next.y < pos.y - 10.0
-			var jumpOverGap = not JumpCast.is_colliding() and abs(overNext.y - pos.y) < 10.0
+			var jumpOverGap = not JumpCast.is_colliding() and abs(pos.y - next.y) < 10.0 and abs(overNext.y - next.y) < 2.0
 			if jumpUp or jumpOverGap:
 				if isOnFloor:
-					var strength = (pos.y - next.y) * 10.0
+					var jumpHeight = abs(pos.y - next.y)
+					var strength = MaxJumpStrength * (jumpHeight / MaxJumpHeight) * 2.5
 					if jumpOverGap and not jumpUp:
-						var jumpDistance = GetJumpDistance(Motion.x < 0.0)
+						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
 						strength = MaxJumpStrength * (jumpDistance / JumpLength)
 						var removePoints = true
-						while removePoints:
+						while removePoints and path.size() > 0:
 							var point = path[0]
-							if abs(overNext.y - pos.y) < 10.0 and abs(point.x - pos.x) < jumpDistance:
+							if abs(point.y - pos.y) < 10.0 and abs(point.x - pos.x) < jumpDistance:
 								 path.remove(0)
 							else:
 								removePoints = false
-					if strength > MaxJumpStrength:
+					if strength > MaxJumpStrength * 1.5:
 						UpdatePath()
 					elif IsJumpFree():
 						Motion.y -= strength
@@ -122,7 +125,7 @@ func GetJumpDistance(goingLeft):
 		JumpCast.set_position(Vector2(distance, 0.0))
 		JumpCast.cast_to = Vector2(0.0, 12.0)
 		JumpCast.force_raycast_update()
-	return abs(distance)
+	return abs(distance) + 5.0
 
 func IsJumpFree():
 	return not (LeftJumpCast.is_colliding() or RightJumpCast.is_colliding())
