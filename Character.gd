@@ -19,6 +19,8 @@ var GravityForce = 0.0
 var JumpLength
 var MaxJumpHeight = 0.0
 
+var FramesSinceWaypointRemoved = 0
+
 func SetMovementValues(jumpStrength, moveSpeed, gravityForce):
 	JumpStrength = jumpStrength
 	MaxJumpStrength = jumpStrength
@@ -44,6 +46,7 @@ func SetGoal(goal):
 func UpdatePath():
 	if Goal:
 		path = nav.get_simple_path(get_position(), Goal, false)
+		FramesSinceWaypointRemoved = 0
 
 func _process(delta):
 	Motion.y += GravityForce
@@ -58,10 +61,15 @@ func _process(delta):
 		if pathSize > 1:
 			SetPointCastCoords(to_local(path[1]))
 		
+		var isOnFloor = is_on_floor()
+		
+		FramesSinceWaypointRemoved += 1
 		if abs(next.x - pos.x) <= 20.0 and next.y > pos.y - 10.0 and next.y < pos.y + 26.0 and PathClear():
 			path.remove(0)
+			FramesSinceWaypointRemoved = 0
+		elif FramesSinceWaypointRemoved > 100 and isOnFloor:
+			UpdatePath()
 		else:
-			var isOnFloor = is_on_floor()
 			if next.x < pos.x - 10.0:
 				if isOnFloor:
 					Motion.x = -MoveSpeed
