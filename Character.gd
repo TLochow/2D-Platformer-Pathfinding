@@ -69,6 +69,7 @@ func _process(delta):
 			FramesSinceWaypointRemoved = 0
 		elif FramesSinceWaypointRemoved > 100 and isOnFloor:
 			UpdatePath()
+			Motion = Vector2(rand_range(-50.0, 50.0), rand_range(-50.0, 50.0))
 		else:
 			if next.x < pos.x - 10.0:
 				if isOnFloor:
