@@ -68,8 +68,8 @@ func _process(delta):
 			path.remove(0)
 			FramesSinceWaypointRemoved = 0
 		elif FramesSinceWaypointRemoved > 100 and isOnFloor:
+			Motion = (next - pos).normalized() * 100.0
 			UpdatePath()
-			Motion = Vector2(rand_range(-50.0, 50.0), rand_range(-50.0, 50.0))
 		else:
 			if next.x < pos.x - 10.0:
 				if isOnFloor:
@@ -107,7 +107,6 @@ func _process(delta):
 							else:
 								removePoints = false
 					var strength = mapLog(jumpHeight, MaxJumpHeight, MaxJumpStrength)
-					print(strength)
 					if jumpOverGap and not jumpUp:
 						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
 						strength = MaxJumpStrength * (jumpDistance / JumpLength)
