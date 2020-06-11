@@ -17,9 +17,16 @@ var JumpStrength = 0.0
 var MoveSpeed = 0.0
 var GravityForce = 0.0
 var JumpLength
+var SlowerJumpLength
 var MaxJumpHeight = 0.0
 
 var FramesSinceWaypointRemoved = 0
+
+var RoutesSinceLastProgressImprovement = 0
+var CurrentProgress = 0
+var LastProgress = 0
+var LastGoal = Vector2(0.0, 0.0)
+var Slower = false
 
 func SetMovementValues(jumpStrength, moveSpeed, gravityForce):
 	JumpStrength = jumpStrength
@@ -27,6 +34,7 @@ func SetMovementValues(jumpStrength, moveSpeed, gravityForce):
 	MoveSpeed = moveSpeed
 	GravityForce = gravityForce
 	JumpLength = CalculateJumpLength(JumpStrength, MoveSpeed, GravityForce)
+	SlowerJumpLength = CalculateJumpLength(JumpStrength, MoveSpeed * 0.5, GravityForce)
 
 func CalculateJumpLength(jumpStrength, moveSpeed, gravityForce):
 	var pos = Vector2(0.0, 0.0)
@@ -47,6 +55,22 @@ func UpdatePath():
 	if Goal:
 		path = nav.get_simple_path(get_position(), Goal, false)
 		FramesSinceWaypointRemoved = 0
+		var pathLength = path.size()
+		if Goal == LastGoal:
+			if CurrentProgress >= LastProgress:
+				RoutesSinceLastProgressImprovement += 1
+				if RoutesSinceLastProgressImprovement >= 2:
+					Slower = true
+					if RoutesSinceLastProgressImprovement >= 4:
+						var succesfulSteps = pathLength - LastProgress
+						Goal = path[succesfulSteps - 1]
+						UpdatePath()
+		else:
+			LastGoal = Goal
+			RoutesSinceLastProgressImprovement = 0
+			LastProgress = pathLength
+			Slower = false
+		CurrentProgress = pathLength
 
 func _process(delta):
 	Motion.y += GravityForce
@@ -58,8 +82,7 @@ func _process(delta):
 		var overNext = next
 		if pathSize > 1:
 			overNext = path[1]
-		if pathSize > 1:
-			SetPointCastCoords(to_local(path[1]))
+			SetPointCastCoords(to_local(overNext))
 		
 		var isOnFloor = is_on_floor()
 		
@@ -67,6 +90,10 @@ func _process(delta):
 		if abs(next.x - pos.x) <= 20.0 and next.y > pos.y - 10.0 and next.y < pos.y + 26.0 and PathClear():
 			path.remove(0)
 			FramesSinceWaypointRemoved = 0
+			CurrentProgress = path.size()
+			if CurrentProgress < LastProgress:
+				Slower = false
+				LastProgress = CurrentProgress
 		elif FramesSinceWaypointRemoved > 100 and isOnFloor:
 			Motion = (next - pos).normalized() * 100.0
 			UpdatePath()
@@ -109,7 +136,10 @@ func _process(delta):
 					var strength = mapLog(jumpHeight, MaxJumpHeight, MaxJumpStrength)
 					if jumpOverGap and not jumpUp:
 						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
-						strength = MaxJumpStrength * (jumpDistance / JumpLength)
+						if Slower:
+							strength = MaxJumpStrength * (jumpDistance / SlowerJumpLength)
+						else:
+							strength = MaxJumpStrength * (jumpDistance / JumpLength)
 						var removePoints = true
 						while removePoints:
 							var point = path[0]
@@ -129,6 +159,8 @@ func _process(delta):
 	else:
 		Motion.x = lerp(Motion.x, 0.0, 0.2)
 	
+	if Slower:
+		Motion.x *= 0.8
 	Motion.x = clamp(Motion.x, -MoveSpeed, MoveSpeed)
 	Motion = move_and_slide(Motion, Vector2(0.0, -1.0))
 	update()
