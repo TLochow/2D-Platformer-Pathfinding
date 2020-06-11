@@ -98,10 +98,13 @@ func _process(delta):
 						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
 						strength = MaxJumpStrength * (jumpDistance / JumpLength)
 						var removePoints = true
-						while removePoints and path.size() > 0:
+						while removePoints:
 							var point = path[0]
 							if abs(point.y - pos.y) < 10.0 and abs(point.x - pos.x) < jumpDistance:
-								 path.remove(0)
+								path.remove(0)
+								if path.size() == 0:
+									strength = 0.0
+									removePoints = false
 							else:
 								removePoints = false
 					if strength > MaxJumpStrength * 1.5:
