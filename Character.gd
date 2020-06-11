@@ -93,6 +93,17 @@ func _process(delta):
 			if jumpUp or jumpOverGap:
 				if isOnFloor:
 					var jumpHeight = abs(pos.y - next.y)
+					if jumpUp and not jumpOverGap:
+						var removePoints = true
+						while removePoints:
+							var point = path[0]
+							jumpHeight = abs(pos.y - point.y)
+							if point.y < pos.y and abs(point.x - next.x) < 2.0:
+								path.remove(0)
+								if path.size() == 0:
+									removePoints = false
+							else:
+								removePoints = false
 					var strength = MaxJumpStrength * (jumpHeight / MaxJumpHeight) * 2.5
 					if jumpOverGap and not jumpUp:
 						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
