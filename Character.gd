@@ -98,13 +98,16 @@ func _process(delta):
 						while removePoints:
 							var point = path[0]
 							jumpHeight = abs(pos.y - point.y)
-							if point.y < pos.y and abs(point.x - next.x) < 2.0:
+							SetPointCastCoords(to_local(point))
+							NextPointCast.force_raycast_update()
+							if point.y < pos.y and abs(pos.x - point.x) < 20.0 and PathClear():
 								path.remove(0)
 								if path.size() == 0:
 									removePoints = false
 							else:
 								removePoints = false
-					var strength = MaxJumpStrength * (jumpHeight / MaxJumpHeight) * 2.5
+					var strength = mapLog(jumpHeight, MaxJumpHeight, MaxJumpStrength)
+					print(strength)
 					if jumpOverGap and not jumpUp:
 						var jumpDistance = min(GetJumpDistance(Motion.x < 0.0), JumpLength)
 						strength = MaxJumpStrength * (jumpDistance / JumpLength)
@@ -158,3 +161,6 @@ func SetPointCastCoords(castTo):
 
 func PathClear():
 	return not NextPointCast.is_colliding()
+
+func mapLog(position, maxp, maxv):
+	return (log(position) / log(maxp)) * maxv;
