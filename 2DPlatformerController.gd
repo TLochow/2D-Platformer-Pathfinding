@@ -118,7 +118,7 @@ func _process(delta):
 		var overNext = next
 		if pathSize > 1:
 			overNext = path[1]
-		SetPointCastCoords(to_local(overNext))
+		SetPointCastCoords(to_local(next))
 		
 		var isOnFloor = ParentBody.is_on_floor()
 		
